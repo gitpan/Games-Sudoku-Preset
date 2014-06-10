@@ -2,9 +2,14 @@ use strict;
 use warnings FATAL => 'all';
 use Test::More;
 
-plan tests => 2;
+# CPAN Authors FAQ
+use Tk;
+my $mw = eval { MainWindow->new };
+if (!$mw) { plan( skip_all => "Tk needs a graphical monitor" ); }
+use Config;
+my $path_to_perl = $Config{perlpath};
 
-can_ok('Games::Sudoku::Preset', qw/enter edit validate/);
+plan tests => 1;
 
 use Games::Sudoku::Preset;
 

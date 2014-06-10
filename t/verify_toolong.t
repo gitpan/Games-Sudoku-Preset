@@ -2,7 +2,9 @@ use strict;
 use warnings FATAL => 'all';
 use Test::More;
 
-plan tests => 1;
+plan tests => 2;
+
+can_ok('Games::Sudoku::Preset', qw/enter edit validate/);
 
 use Games::Sudoku::Preset;
 

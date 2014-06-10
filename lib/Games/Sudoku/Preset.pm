@@ -4,7 +4,7 @@ use warnings;
 
 package Games::Sudoku::Preset;
 
-use version; our $VERSION = qv('0.0.1');    # PBP
+use version; our $VERSION = qv('0.0.2');    # PBP
 
 use Tk;
 use List::Util qw(first);
