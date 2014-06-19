@@ -22,9 +22,9 @@ provides:
     version: 0
   Games::Sudoku::Preset:
     file: lib/Games/Sudoku/Preset.pm
-    version: v0.0.2
+    version: v0.0.3
 requires:
   Tk: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: v0.0.2
+version: v0.0.3

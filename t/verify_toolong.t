@@ -27,7 +27,9 @@ my $game = <<END;
 ^^^ ^7^ ^^^
 7^3 ^^^ 86^
 END
+no warnings 'once';
 open SAVEERR, ">&STDERR";
+use warnings 'once';
 # Name "main::SAVEERR" used only once: possible typo at ...
 open (STDERR, '>', $errfile) or  die "cannot assign STDERR to $errfile: $!";
 select STDERR; $| = 1;   # Pufferung deaktivieren (ging hier auch ohne)
