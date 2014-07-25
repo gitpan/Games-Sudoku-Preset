@@ -8,7 +8,7 @@ my $builder = Module::Build->new(
     license             => 'perl',
     dist_author         => q{Klaus Wittrock <Wittrock#cpan.org>},
     dist_version_from   => 'lib/Games/Sudoku/Preset.pm',
-    release_status      => 'testing',
+    release_status      => 'stable',
     configure_requires => {
         'Module::Build' => 0,
     },
@@ -20,11 +20,6 @@ my $builder = Module::Build->new(
     },
     add_to_cleanup     => [ 'Sudoku-Preset-*' ],
     create_makefile_pl => 'traditional',
-    meta_merge          => {
-        no_index => {
-            package   => [ 'Games::Sudoku::Preset::Cell' ],
-        },
-    },
 );
 
 $builder->create_build_script();

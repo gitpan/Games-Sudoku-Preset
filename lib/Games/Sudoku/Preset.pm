@@ -4,84 +4,84 @@ use warnings;
 
 package Games::Sudoku::Preset;
 
-use version; our $VERSION = qv('0.0.3');    # PBP
+use version; our $VERSION = qv('0.1');    # PBP
 
 use Tk;
 use List::Util qw(first);
 
-my @cells;   # array of cell objects (0 .. 80)
+my @cells;                                  # array of cell objects (0 .. 80)
 
 # ====================================================================
 #   Start methods stuff
 # ====================================================================
 
-# Start method for entering a new puzzle
-# Usage:  my $puzzle = Games::Sudoku::Preset->enter();
-# Result: the entered and validated puzzle as a string of 81 characters
+# Start method enter
+#   Purpose: enter a new Sudoku puzzle
+#   Usage:   my $puzzle = Games::Sudoku::Preset->enter();
+#   Result:  the entered and validated puzzle as a string of 81 characters
 #
 sub enter {
-	my $class = shift;
+    my $class = shift;
 #	_createGUI();
-	_initGUI();
+    GUI::initGUI();
 
     Tk::MainLoop();
-	my $game = _mk_result();
+    my $game = _mk_result();
     return $game;
 }
 
 # Start method validate
-#   Purpose: validate a sudoku puzzle
+#   Purpose: validate a Sudoku puzzle
 #   Usage:   my $puzzle = Games::Sudoku::Preset->validate($game);
 #   Result:  validated puzzle as a string of 81 characters
 #
 sub validate {
-	my ($class, $game) = @_;
+    my ( $class, $game ) = @_;
 
-	my $err_ref = _eval_initGUI_with_game($game);
+    my $err_ref = _eval_initGUI_with_game($game);
 
     Tk::MainLoop() if ($err_ref);
-	$game = _mk_result();
+    $game = _mk_result();
     return $game;
 }
 
 # Start method edit
-#   Purpose: edit a sudoku puzzle
+#   Purpose: edit a Sudoku puzzle
 #   Usage:   my $puzzle = Games::Sudoku::Preset->edit($game);
 #   Result:  edited and validated puzzle as a string of 81 characters
 #
 sub edit {
-	my ($class, $game) = @_;
+    my ( $class, $game ) = @_;
 
-	my $err_ref = _eval_initGUI_with_game($game);
+    my $err_ref = _eval_initGUI_with_game($game);
 
-say STDERR 'Start edit MainLoop';
     Tk::MainLoop();
-	$game = _mk_result();
+    $game = _mk_result();
     return $game;
 }
 
 sub _eval_initGUI_with_game {
-	my $game = shift;
+    my $game = shift;
 
-	my $err_ref = eval {_initGUI_with_game($game)};
+    my $err_ref = eval {_initGUI_with_game($game)};
     if ($@) {
-		print STDERR "Fatal error: $@\n";
-		$err_ref = 1;
-	}
+        print STDERR "Fatal error: $@\n";
+        $err_ref = 1;
+    }
     return $err_ref;
 }
 
 sub _initGUI_with_game {
-	my $game = shift;
+    my $game = shift;
 
-	$game = _purify($game);
-	return '' unless $game;   # after wrong ref type
-	my $holder = first {$_ !~ /([1-9])/ } (split '', $game);
-	'Cell'->placeholder($holder);   # keep for return
-	_initGUI();
-	_insert_to_board($game);
-	my $err_ref = _verify_board($game);
-	return $err_ref;
+    $game = _purify($game);
+    return '' unless $game;    # after wrong ref type
+    my $holder = first {$_ !~ /([1-9])/} ( split '', $game );
+    'Cell'->placeholder($holder);    # keep for return
+    GUI::initGUI();
+    _insert_to_board($game);
+    my $err_ref = ::verify_board($game);
+    return $err_ref;
 }
 
 # purify the supplied game
@@ -91,37 +91,36 @@ sub _initGUI_with_game {
 #     $game_org: string or ref to array
 #
 sub _purify {
-	my $game = shift;
+    my $game = shift;
 
-	if (!ref $game) {
-		if ($game =~ m'^#') {
-			# needs ignore preceeding comment lines
-			my @game = split (qr"\n", $game);
-			$game = \@game;
-		}
-	}
+    if ( !ref $game ) {
+        if ( $game =~ m'^#' ) {
+            # needs ignore preceeding comment lines
+            my @game = split( qr"\n", $game );
+            $game = \@game;
+        }
+    }
 
-	if (ref $game) {
-		if (ref $game eq 'ARRAY'){
-			# ignore preceeding comment lines
-			while ( ${$game}[0] =~ /^#/ ) { shift @$game };
-			$game = join ('', @$game);
-		}
-		else {
-			die 'Parameter "game" must be a string or an array reference';
-		}
-	}
+    if ( ref $game ) {
+        if ( ref $game eq 'ARRAY' ) {
+            # ignore preceeding comment lines
+            while ( ${$game}[0] =~ /^#/ ) {shift @$game}
+            $game = join( '', @$game );
+        } else {
+            die 'Parameter "game" must be a string or an array reference';
+        }
+    }
 
-	# ignore whitespace
-	if ( length($game) > 81 ) { $game =~ s/\s//g };
+    # ignore whitespace
+    if ( length($game) > 81 ) {$game =~ s/\s//g}
 
-	return $game if ( length($game) == 81 );
+    return $game if ( length($game) == 81 );
 
-	my $l = length($game);
+    my $l = length($game);
     $game =~ s/(.{9})(?=.)/$1\n/g;
-	my @msg = ("Length of puzzle string is $l, should be 81\n\n$game\n");
-	die @msg;
-}
+    my @msg = ("Length of puzzle string is $l, should be 81\n\n$game\n");
+    die @msg;
+} ## end sub _purify
 
 # Populate the cell objects with the given game
 # the given game is purified already
@@ -129,17 +128,17 @@ sub _purify {
 #
 sub _insert_to_board {
     my $gamestring = shift;
-	return unless $gamestring;
+    return unless $gamestring;
 
-		my @game = split(//, $gamestring);
-		foreach my $cell_idx (0 .. 80) {
-            my $cell = $cells[$cell_idx];
-			$cell->cellvalue($game[$cell_idx]) if $game[$cell_idx] =~ /[1-9]/;
-		}
+    my @game = split( //, $gamestring );
+    foreach my $cell_idx ( 0 .. 80 ) {
+        my $cell = $cells[$cell_idx];
+        $cell->cellvalue( $game[$cell_idx] ) if $game[$cell_idx] =~ /[1-9]/;
+    }
 
-	my $count;
-	$count++ while $gamestring =~ /[1-9]/g;
-	_show_initial_count($count);
+    my $count;
+    $count++ while $gamestring =~ /[1-9]/g;
+    GUI::show_initial_count($count);
     return;
 }
 
@@ -152,63 +151,69 @@ sub _mk_result {
     my $unknown_digit = 'Cell'->placeholder();
 
     my @alldigits = map( {
-	                        $_->cellvalue() || $unknown_digit; 
-						  } @cells );
-        return join '', @alldigits;
+                           $_->cellvalue() || $unknown_digit;
+                         } @cells );
+    return join '', @alldigits;
 }
+
+# ====================================================================
+#<<<  hands off, perltidy!
+package
+        GUI;
+#>>>
+# ====================================================================
+
+use List::Util qw(first);
 
 # ====================================================================
 #   GUI stuff
 # ====================================================================
 
-{   # start of GUI block
-
-
-my $mw;               # the MainWindow
+my $mw;    # the MainWindow
 my $tinysize = 10;    # size of a tiny square (pixels)
 my $fieldsize;        # size of a sudoku field
-my $clickfield;              # the toplevel which covers the active sudoku field
-                             # for clicking
-my @tiny_fields = (undef);   # the tiny squares of the clickfield (indexed 1 .. 9)
-my $valuecount  = 0;         # count of entered values
-my $status_lb;               # the status Label
+my $clickfield;       # the toplevel which covers the active sudoku field
+# for clicking
+my @tiny_fields = (undef); # the tiny squares of the clickfield (indexed 1 .. 9)
+my $valuecount  = 0;       # count of entered values
+my $status_lb;             # the status Label
 
-sub _initGUI {
+sub initGUI {
 #   $mw = shift;
 
-	$mw or $mw = MainWindow->new();
-	_createGUI();
-	return;
+    $mw or $mw = MainWindow->new();
+    _createGUI();
+    return;
 }
 
 sub _createGUI {
 
-	$mw or $mw = MainWindow->new();
-	# let a click on the kill button (at the right side of the titlebar)
-	# cancel the program
+    $mw or $mw = MainWindow->new();
+    # let a click on the kill button (at the right side of the titlebar)
+    # cancel the program
     $mw->protocol( 'WM_DELETE_WINDOW', \&Tk::exit );
     $fieldsize = 3 * ( $tinysize + 1 ) - 1;    # size of sudoku field
     my $totalsize = 9 * ( $fieldsize + 1 ) - 1;
     _create_board($totalsize);
-	
+
     # create bottom area
 
     my $but_fr = $mw->Frame()->pack( -side => 'bottom', -fill => 'x' );
 
     # make clickfield invisible while mouse is over the bottom frame
-    $but_fr->bind( '<Enter>', sub { $clickfield->withdraw } );
+    $but_fr->bind( '<Enter>', sub {$clickfield->withdraw} );
     my $stat_fr = $but_fr->Frame()->pack( -fill => 'x' );
 
     # create value count labels
 
     $stat_fr->Label( -text => 'values' )->pack( -side => 'right' );
     $stat_fr->Label(
-        -textvariable => \$valuecount,
-        -width        => 2,
-        -anchor       => 'e'
-    )->pack( -side => 'right' );
+                     -textvariable => \$valuecount,
+                     -width        => 2,
+                     -anchor       => 'e'
+                   )->pack( -side => 'right' );
 
-	# create status label
+    # create status label
 
     $status_lb = $stat_fr->Label()->pack( -fill => 'x' );
 
@@ -217,22 +222,23 @@ sub _createGUI {
     my $done_b = $but_fr->Button(
         -text    => 'Done',
         -command => sub {
-                         my $err = _verify_board();
-                         $err or { $mw->destroy() };
-						},
+            my $err = ::verify_board();
+            $err or { $mw->destroy() };
+        },
     )->pack( -side => 'left', -padx => 10, -pady => 3 );
 
     # create Save&Cancel button
 
     $but_fr->Button(
         -text    => 'Save & Cancel',
-        -command => sub { my $ok = _save_sudoku($mw);
-                         $ok and Tk::exit() ;
-						},
+        -command => sub {
+            my $ok = ::save_sudoku($mw);
+            $ok and Tk::exit();
+        },
     )->pack( -side => 'left', -padx => 10, -pady => 3 );
 
     # create Cancel button
-    $but_fr->Button( -text => 'Cancel', -command => sub { Tk::exit() } )
+    $but_fr->Button( -text => 'Cancel', -command => sub {Tk::exit()} )
       ->pack( -side => 'left' );
 
     # set window size
@@ -249,18 +255,19 @@ sub _createGUI {
     # Set the initial focus to the 1st field
     $cells[0]->property('Button')->focus();
 
-	return;
-}
+    return;
+} ## end sub _createGUI
 
 sub _create_board {
     my $totalsize = shift;
 
-	my $field_index = 0;
+    my $field_index = 0;
     foreach my $i ( 0 .. 8 ) {
         foreach my $j ( 0 .. 8 ) {
             my $fieldID = _create_field( $j, $i );
-			my $cellobj = 'Cell'->new($field_index, $fieldID);
-            $fieldID->configure(-textvariable => \$cellobj->property('Value'));
+            my $cellobj = 'Cell'->new( $field_index, $fieldID );
+            $fieldID->configure(
+                                -textvariable => \$cellobj->property('Value') );
             push @cells, $cellobj;
             $field_index++;
         }
@@ -270,57 +277,55 @@ sub _create_board {
     foreach my $pos ( 3, 6 ) {
         my $where = $pos * ( $fieldsize + 1 ) - 1;
         $mw->Frame(
-            -width      => 1,
-            -height     => $totalsize,
-            -background => 'black'
-        )->place( -x => $where, -y => 0 );
+                    -width      => 1,
+                    -height     => $totalsize,
+                    -background => 'black'
+                  )->place( -x => $where, -y => 0 );
         $mw->Frame(
-            -width      => $totalsize,
-            -height     => 1,
-            -background => 'black'
-        )->place( -x => 0, -y => $where );
+                    -width      => $totalsize,
+                    -height     => 1,
+                    -background => 'black'
+                  )->place( -x => 0, -y => $where );
     }
     return;
-}
+} ## end sub _create_board
 
 # create a sudoku field
 #
 sub _create_field {
-    my ( $w, $h ) = my ( $w_num, $h_num ) = @_;    # pos. num.s of sudoku field (0 .. 8)
-    my $field_index = $w + 9 * $h;                 # index of sudoku field (0 .. 80)
-    $w *= $fieldsize + 1;                          # pos. of sudoku field (pixels)
-    $h *= $fieldsize + 1;                          #
+    my ( $w, $h ) = my ( $w_num, $h_num ) = @_; # pos. num.s of sudoku field (0 .. 8)
+    my $field_index = $w + 9 * $h;    # index of sudoku field (0 .. 80)
+    $w *= $fieldsize + 1;             # pos. of sudoku field (pixels)
+    $h *= $fieldsize + 1;             #
 
     # first create a square Frame to force a square Button in it
     my $space = $mw->Frame( -width => $fieldsize, -height => $fieldsize )
       ->place( -x => $w, -y => $h );
-    $space->packPropagate(0);                      # prevent resizing the frame
+    $space->packPropagate(0);         # prevent resizing the frame
     my $fieldID = $space->Button()->pack( -fill => 'both', -expand => 1 );
 
     # mouse and keyboard bindings
 
-    $fieldID->bind( '<Enter>', [ \&_move_clickfield ] );
+    $fieldID->bind( '<Enter>', [\&_move_clickfield] );
     foreach my $digit ( 1 .. 9 ) {
         #alpha keypad
-        $fieldID->bind(
-            "<Key-$digit>" => [ \&_change_digit, $digit ] );
+        $fieldID->bind( "<Key-$digit>" => [\&_change_digit, $digit] );
 
         #numeric keypad
-        $fieldID->bind(
-            "<KP_$digit>" => [ \&_change_digit, $digit ] );
+        $fieldID->bind( "<KP_$digit>" => [\&_change_digit, $digit] );
     }
     # delete digit
     foreach my $key (qw/0 KP_0 space Delete/) {
-        $fieldID->bind( "<$key>" => [ \&_change_digit ] );
+        $fieldID->bind( "<$key>" => [\&_change_digit] );
     }
 
-	# keyboard focus move
-    $fieldID->bind( "<Key-Up>"    => [ \&move_focus, $w_num,     $h_num - 1 ] );
-    $fieldID->bind( "<Key-Down>"  => [ \&move_focus, $w_num,     $h_num + 1 ] );
-    $fieldID->bind( "<Key-Left>"  => [ \&move_focus, $w_num - 1, $h_num ] );
-    $fieldID->bind( "<Key-Right>" => [ \&move_focus, $w_num + 1, $h_num ] );
+    # keyboard focus move
+    $fieldID->bind( "<Key-Up>"    => [\&_move_focus, $w_num,     $h_num - 1] );
+    $fieldID->bind( "<Key-Down>"  => [\&_move_focus, $w_num,     $h_num + 1] );
+    $fieldID->bind( "<Key-Left>"  => [\&_move_focus, $w_num - 1, $h_num] );
+    $fieldID->bind( "<Key-Right>" => [\&_move_focus, $w_num + 1, $h_num] );
     return $fieldID;
-}
+} ## end sub _create_field
 
 # move focus to neighbouring sudoku field
 # callback of the arrow keys
@@ -331,7 +336,7 @@ sub _move_focus {
     $clickfield->withdraw;    # make clickfield invisible
     $w_new %= 9;              # end-around
     $h_new %= 9;
-    $cells[ $w_new + 9 * $h_new ]->property('Button')->focus();
+    $cells[$w_new + 9 * $h_new]->property('Button')->focus();
     return;
 }
 
@@ -340,20 +345,19 @@ sub _move_focus {
 # also called from _change_my_digit
 #
 sub _change_digit {
-    my ( $fieldID, $digit_num ) = @_;   # ID of button, digit
+    my ( $fieldID, $digit_num ) = @_;    # ID of button, digit
 
-    $clickfield->withdraw;    # make clickfield invisible
-	_reset_colors() if $status_lb->cget('-fg') eq 'red';
+    $clickfield->withdraw;               # make clickfield invisible
+    _reset_colors() if $status_lb->cget('-fg') eq 'red';
 
-	my $cell = first {$_->property('Button') eq $fieldID} @cells;
-	defined $cell  or  die "Code error: Button $fieldID not found in cells";
+    my $cell = first {$_->property('Button') eq $fieldID} @cells;
+    defined $cell or die "Code error: Button $fieldID not found in cells";
 
     if ($digit_num) {
         # set or replace old digit
-        ${$fieldID->cget('-textvariable')} or $valuecount++;
-        $cell->cellvalue($digit_num); 
-    }
-    else {
+        ${ $fieldID->cget('-textvariable') } or $valuecount++;
+        $cell->cellvalue($digit_num);
+    } else {
         # delete old digit
         $cell->cellvalue('');
         $valuecount--;
@@ -362,9 +366,9 @@ sub _change_digit {
     return;
 }
 
-sub _show_initial_count {
-	$valuecount = shift;
-	return;
+sub show_initial_count {
+    $valuecount = shift;
+    return;
 }
 
 # ====================================================================
@@ -372,7 +376,7 @@ sub _show_initial_count {
 # ====================================================================
 
 sub _create_clickfield {
-	my $mw = shift;
+    my $mw = shift;
 
     $clickfield = $mw->Toplevel( -width => $fieldsize, -height => $fieldsize );
     $clickfield->overrideredirect(1);    # suppress window frame
@@ -381,26 +385,25 @@ sub _create_clickfield {
             _create_tinysquare( $j, $i );
         }
     }
-    $clickfield->withdraw;   # make clickfield invisible
-	# make clickfield invisible when the window gets moved
-	$mw->bind( '<Configure>' => sub { $clickfield->withdraw} );
+    $clickfield->withdraw;               # make clickfield invisible
+    # make clickfield invisible when the window gets moved
+    $mw->bind( '<Configure>' => sub {$clickfield->withdraw} );
     return;
 }
 
 sub _create_tinysquare {
-    my ($w, $h ) = my ($w_num, $h_num ) 
-	              = @_;    # pos. num.s of tiny square
-    $w *= $tinysize + 1;   # pos. of tiny square
-    $h *= $tinysize + 1;   #
+    my ( $w, $h ) = my ( $w_num, $h_num ) = @_;    # pos. num.s of tiny square
+    $w *= $tinysize + 1;                           # pos. of tiny square
+    $h *= $tinysize + 1;                           #
 
     # first create a square Frame to force a square Button in it
     my $space = $clickfield->Frame( -width => $tinysize, -height => $tinysize )
       ->place( -x => $w, -y => $h );
-    $space->packPropagate(0);    # prevent resizing the frame
+    $space->packPropagate(0);                      # prevent resizing the frame
     my $tiny = $space->Button(
-        -relief     => 'flat',
-        -background => 'black',
-        -command    => [ \&_change_my_digit, $w_num + 3 * $h_num + 1 ],
+                      -relief     => 'flat',
+                      -background => 'black',
+                      -command => [\&_change_my_digit, $w_num + 3 * $h_num + 1],
     )->pack( -fill => 'both', -expand => 1 );
     push( @tiny_fields, $tiny );
     return;
@@ -410,7 +413,7 @@ sub _create_tinysquare {
 # callback of the <Enter> event
 #
 sub _move_clickfield {
-    my ( $fieldID ) = shift;   # ID of button to be covered
+    my ($fieldID) = shift;    # ID of button to be covered
 
     # ignore re-entering the active field
     # (this happens when withdrawing the clickfield)
@@ -418,27 +421,23 @@ sub _move_clickfield {
     # Color change and popup required when returning from the bottom row,
     # so no return to caller in this case
     return
-      if (  $fieldID == ('Cell'->activefield() || 0)
-        and $clickfield->state eq 'normal' );
+      if (     $fieldID == ( 'Cell'->activefield() || 0 )
+           and $clickfield->state eq 'normal' );
 
     'Cell'->activefield($fieldID);
     $clickfield->withdraw;    # make clickfield invisible
 
     # mark the tiny square of the current digit by a different color
-    foreach my $tiny ( @tiny_fields[ 1 .. 9 ] ) {
-        $tiny->configure(
-            -background       => 'black',
-            -activebackground => 'black'
-        );
+    foreach my $tiny ( @tiny_fields[1 .. 9] ) {
+        $tiny->configure( -background       => 'black',
+                          -activebackground => 'black' );
     }
-    if ( my $digit = ${$fieldID->cget('-textvariable')} ) {
-        $tiny_fields[$digit]->configure(
-            -background       => 'red',
-            -activebackground => 'orange'
-        );
+    if ( my $digit = ${ $fieldID->cget('-textvariable') } ) {
+        $tiny_fields[$digit]->configure( -background       => 'red',
+                                         -activebackground => 'orange' );
     }
     $clickfield->configure( -popover => $fieldID );
-    $clickfield->Popup();    # make clickfield visible
+    $clickfield->Popup();     # make clickfield visible
     return;
 }
 
@@ -446,10 +445,10 @@ sub _move_clickfield {
 # callback of the tiny squares
 #
 sub _change_my_digit {
-    my $digit_num = shift;    # digit of the clicked tiny square
-    my $actfield = 'Cell'->activefield();
-    my $olddigit = ${$actfield->cget('-textvariable')};
-    if ( $olddigit eq $digit_num ) { $digit_num = undef };
+    my $digit_num = shift;                   # digit of the clicked tiny square
+    my $actfield  = 'Cell'->activefield();
+    my $olddigit = ${ $actfield->cget('-textvariable') };
+    if ( $olddigit eq $digit_num ) {$digit_num = undef}
     _change_digit( $actfield, $digit_num );
     return;
 }
@@ -458,38 +457,39 @@ sub _change_my_digit {
 
 # show problem cells in red on the board.
 #
-sub _mark_problem_cells {
-	my $err_ref = shift;
-	my ($errtxt, $errcells_ref) = @$err_ref;
-	$status_lb->configure( -text => $errtxt, -fg => 'red');
-	foreach my $errcell (@$errcells_ref) {
-		my $fieldID = $errcell->property('Button');
-	    if ($errcell->property('Value')) {
-			$fieldID->configure(-fg => 'red');
-		} else {
-			$fieldID->configure(-bg => 'red');
-		}
-		$errcell->is_errcell(1);
-	}
+sub mark_problem_cells {
+    my $err_ref = shift;
+    my ( $errtxt, $errcells_ref ) = @$err_ref;
+    $status_lb->configure( -text => $errtxt, -fg => 'red' );
+    foreach my $errcell (@$errcells_ref) {
+        my $fieldID = $errcell->property('Button');
+        if ( $errcell->property('Value') ) {
+            $fieldID->configure( -fg => 'red' );
+        } else {
+            $fieldID->configure( -bg => 'red' );
+        }
+        $errcell->is_errcell(1);
+    }
     return;
 }
 
 # reset the default colors of the problem cells
 # on the 1st digit change after the error display
-#	
+#
 sub _reset_colors {
-	my @errcells = grep {$_->is_errcell} @cells;
+    my @errcells = grep {$_->is_errcell} @cells;
     return unless @errcells;
 
-	my $field = first {$_->property('Button')->cget('-bg') ne 'red'} @cells;
-	my $bg_standard = $field->{Button}->cget('-bg');
+    my $field = first {$_->property('Button')->cget('-bg') ne 'red'} @cells;
+    my $bg_standard = $field->{Button}->cget('-bg');
 
-	foreach my $cell (@errcells) {
-			$cell->property('Button')->configure(-fg => 'black', -bg => $bg_standard);
-		    $cell->is_errcell(0);
-	}
-	# clear error text in status
-	$status_lb->configure( -text => '', -fg => 'black');
+    foreach my $cell (@errcells) {
+        $cell->property('Button')
+          ->configure( -fg => 'black', -bg => $bg_standard );
+        $cell->is_errcell(0);
+    }
+    # clear error text in status
+    $status_lb->configure( -text => '', -fg => 'black' );
     return;
 }
 
@@ -501,7 +501,9 @@ sub _showmessage {
     return;
 }
 
-}   # end GUI block
+# ====================================================================
+package main;    # end GUI block
+# ====================================================================
 
 # ====================================================================
 # puzzle verification stuff
@@ -509,244 +511,248 @@ sub _showmessage {
 
 # verify the state of the sudoku board
 # callback of the 'Done' button
-#   $err_ref = _verify_board();
-#     $err_ref is a ref to the first error info as returned 
+#   $err_ref = ::verify_board();
+#     $err_ref is a ref to the first error info as returned
 #     by the error check routines
 #     An error will inhibit the end of the module
 #
-sub _verify_board {
-	my $err_ref = _has_doubles() || _cell_nocand() || _unit_nocand();
-	if ($err_ref) {
-		_mark_problem_cells($err_ref);
-	}
-	return $err_ref;
+sub verify_board {
+    my $err_ref = _has_doubles() || _cell_nocand() || _unit_nocand();
+    if ($err_ref) {
+        GUI::mark_problem_cells($err_ref);
+    }
+    return $err_ref;
 }
 
 # for each value cell search for a sibling with the same value
 #
 sub _has_doubles {
-	my @presets = grep {$_->property('Value')} @cells;
+    my @presets = grep {$_->property('Value')} @cells;
 
-	foreach my $idx1 (0 .. $#presets-1) {
-		my $val1 = $presets[$idx1]->property('Value');
+    foreach my $idx1 ( 0 .. $#presets - 1 ) {
+        my $val1 = $presets[$idx1]->property('Value');
 
-		my @dupl;
-		foreach my $sibltype (qw/Block_num Row_num Col_num/) {
-			my $unitname = $presets[$idx1]->property($sibltype);
-			push @dupl, grep {
-					$_->property($sibltype) eq $unitname
-					and $_->property('Value') eq $val1
-				  } @presets[$idx1+1 .. $#presets];
-		}
-		next unless @dupl;
+        my @dupl;
+        foreach my $sibltype (qw/Block_num Row_num Col_num/) {
+            my $unitname = $presets[$idx1]->property($sibltype);
+            push @dupl, grep {
+                      $_->property($sibltype) eq $unitname
+                  and $_->property('Value') eq $val1
+            } @presets[$idx1 + 1 .. $#presets];
+        }
+        next unless @dupl;
 
-		unshift @dupl, $presets[$idx1];
-		return ["duplicate value $val1", \@dupl];
-	}
-	return;
+        unshift @dupl, $presets[$idx1];
+        return ["duplicate value $val1", \@dupl];
+    }
+    return;
 }
 
 # for each empty cell check whether each poss. value is occupied by siblings
 #
 sub _cell_nocand {
-	my @presets = grep {$_->property('Value')} @cells;
+    my @presets = grep {$_->property('Value')} @cells;
 
-	foreach my $cell (@cells) {
-		next if $cell->property('Value');
-		my @sibls;
-		foreach my $sibltype (qw/Block_num Row_num Col_num/) {
-			my $typeidx = $cell->property($sibltype);
-			push @sibls, grep {$_->property($sibltype) eq $typeidx}  @presets;
-		}
-		my %seen;
-		foreach (@sibls) {$seen{$_->property('Value')}++;};
-		next if keys %seen != 9;
+    foreach my $cell (@cells) {
+        next if $cell->property('Value');
+        my @sibls;
+        foreach my $sibltype (qw/Block_num Row_num Col_num/) {
+            my $typeidx = $cell->property($sibltype);
+            push @sibls, grep {$_->property($sibltype) eq $typeidx} @presets;
+        }
+        my %seen;
+        foreach (@sibls) {$seen{ $_->property('Value') }++;}
+        next if keys %seen != 9;
 
-		return ["no value possible", [$cell]];
-	}
-	return;
+        return ["no value possible", [$cell]];
+    }
+    return;
 }
-
 
 # for each unit check whether any poss. value is invalid for each member cell
 #
 sub _unit_nocand {
-	my @presets = grep {$_->property('Value')} @cells;
+    my @presets = grep {$_->property('Value')} @cells;
 
-UNIT:
-	foreach my $type (qw/Block_num Row_num Col_num/) {
-		foreach my $unitidx (1 .. 9) {
-			# collect the cells of this unit
-			my $unittype = substr($type, 0, 1);
-			my $unitname = lc ($unittype) . $unitidx;
-			my @unitcells = grep {$_->property($type) eq $unitname  
-                                  and  not $_->property('Value')
-                                 } @cells;
+  UNIT:
+    foreach my $type (qw/Block_num Row_num Col_num/) {
+        foreach my $unitidx ( 1 .. 9 ) {
+            # collect the cells of this unit
+            my $unittype  = substr( $type, 0, 1 );
+            my $unitname  = lc($unittype) . $unitidx;
+            my @unitcells = grep {
+                $_->property($type) eq $unitname
+                  and not $_->property('Value')
+            } @cells;
             # skip if all values found in this unit
-            next UNIT unless @unitcells;   
+            next UNIT unless @unitcells;
 
-			my $cands;
-			foreach my $cell (@unitcells) {
-				my %seen;
-				$seen{$_} = undef foreach (1 .. 9);   # define(!) all keys 1..9
-				# collect the siblings of this cell
-				my @sibls = $cell->sibling_cells(\@presets);
+            my $cands;
+            foreach my $cell (@unitcells) {
+                my %seen;
+                $seen{$_} = undef foreach ( 1 .. 9 );  # define(!) all keys 1..9
+                # collect the siblings of this cell
+                my @sibls = $cell->sibling_cells( \@presets );
 
-				# all values of siblings are invalid as cands in this cell
+                # all values of siblings are invalid as cands in this cell
 
-				foreach my $cand (1 .. 9) {
-					foreach my $sibl (@sibls) {
-						my $val = $sibl->property('Value');
-						delete $seen{$val} if exists $seen{$val};
-					}
-				}
-				# collect the valid cands
-				$cands .= join '|', (sort keys %seen);
-			}
-			
-			foreach my $val (1 .. 9) {
-				next if $cands =~ /$val/;
-				# ... and values in this unit are invalid too in the cell,
-				# but not in the unit
-				next if grep {$_->property($type) eq $unitname  
-                              and  $_->property('Value')  eq $val
-                             } @cells;
+                foreach my $cand ( 1 .. 9 ) {
+                    foreach my $sibl (@sibls) {
+                        my $val = $sibl->property('Value');
+                        delete $seen{$val} if exists $seen{$val};
+                    }
+                }
+                # collect the valid cands
+                $cands .= join '|', ( sort keys %seen );
+            }
 
-				return ["value $val not possible", \@unitcells];
-			}
-		}
-	}
-	return;
-}
+            foreach my $val ( 1 .. 9 ) {
+                next if $cands =~ /$val/;
+                # ... and values in this unit are invalid too in the cell,
+                # but not in the unit
+                next
+                  if grep {
+                          $_->property($type) eq $unitname
+                      and $_->property('Value') eq $val
+                  } @cells;
+
+                return ["value $val not possible", \@unitcells];
+            }
+        } ## end foreach...
+    } ## end UNIT: foreach...
+    return;
+} ## end sub _unit_nocand
 
 # ====================================================================
 
 # Callback of the "Save & Cancel" Button
 #
-sub _save_sudoku {
-	my $mw = shift;
+sub save_sudoku {
+    my $mw = shift;
 
-	my $file = _ask_filename($mw);
-        return unless defined $file;
-	my $game = _mk_result();
-        my $ok =  _write_text($mw, $file, $game);
-	return $ok;
+    my $file = _ask_filename($mw);
+    return unless defined $file;
+    my $game = Games::Sudoku::Preset::_mk_result();
+    my $ok = _write_text( $mw, $file, $game );
+    return $ok;
 }
 
-    sub _ask_filename {
-        my $mw = shift;
-        my $file;
+sub _ask_filename {
+    my $mw = shift;
+    my $file;
 
-        $file = $mw->getSaveFile(
-            -title       => 'Sudoku output file',
-            -filetypes => [
-				[ 'Sudoku Files', '.sudo' ],
-				[ 'Text Files', [ '.txt', '.text' ] ],
-				[ 'All Files', ['*'] ],
-			],
-            -defaultextension => '.sudo',
-        );
-        return unless defined $file;
-        use Encode;
-        $file = encode( 'iso-8859-1', $file );
-		return $file;
-    }
+    $file = $mw->getSaveFile(
+                              -title     => 'Sudoku output file',
+                              -filetypes => [
+                                  ['Sudoku Files', '.sudo'],
+                                  ['Text Files', ['.txt', '.text']],
+                                  ['All Files', ['*']],
+                                            ],
+                              -defaultextension => '.sudo',
+                            );
+    return unless defined $file;
+    use Encode;
+    $file = encode( 'iso-8859-1', $file );
+    return $file;
+}
 
 # write text to a file
 #	_write_text($mw, $outfile, text);
 #
 sub _write_text {
-    my ($mw, $outfile, $text ) = @_;
-
-    open( my $out, '>', $outfile )  or  do {
-	  _fatal_err($mw, "Cannot open $outfile:\n$!");
-	  return;
-	};
-	print $out $text;
+    my ( $mw, $outfile, $text ) = @_;
+    open( my $out, '>', $outfile ) or do {
+        _fatal_err( $mw, "Cannot open $outfile:\n$!" );
+        return;
+    };
+    print $out $text;
     close($out) or do {
-	  _fatal_err($mw, "Cannot close $outfile:\n$!");
-	  return;
-	};
-	return 1;
+        _fatal_err( $mw, "Cannot close $outfile:\n$!" );
+        return;
+    };
+    return 1;
 }
 
-sub _fatal_err { 
+sub _fatal_err {
     showmessage(
-        -title   => 'Fatal error',
-        -message => "@_",
-        -icon    => 'error'
-    );
+                 -title   => 'Fatal error',
+                 -message => "@_",
+                 -icon    => 'error'
+               );
     return;
 }
 
 # ====================================================================
-package Cell;
+#<<<  hands off, perltidy!
+package
+        Cell;
+#>>>
 # ====================================================================
 
 # constructor for cell objects
 #
 sub new {
-    my $class    = shift;
-    my ($cell_idx, $button) = @_;    # cell index (0 .. 80), Button widget
+    my $class = shift;
+    my ( $cell_idx, $button ) = @_;    # cell index (0 .. 80), Button widget
 
     my $row   = int( $cell_idx / 9 ) + 1;
     my $col   = $cell_idx % 9 + 1;
     my $block = int( ( $col - 1 ) / 3 ) + 3 * int( ( $row - 1 ) / 3 ) + 1;
 
     # cell properties
-	
-    my %props = (    # cell properties
-#        'Name',       "r${row}c$col",    # for tests
-        'Row_num' =>   "r$row",          # row name (r0 .. r8)
-        'Col_num' =>   "c$col",          # col name (c0 .. c8)
-        'Block_num' => "b$block",        # blk name (b0 .. b8)
-        'Value' =>     '',               # cell value
-		'Button' => $button,             # ID of board field Button
-    );
-	
-	my $self = \%props;
-	bless ($self, $class);
-	return $self;
+
+    my %props = (                      # cell properties
+                 # 'Name'     => "r${row}c$col", # for tests
+                  'Row_num'   => "r$row",        # row name (r0 .. r8)
+                  'Col_num'   => "c$col",        # col name (c0 .. c8)
+                  'Block_num' => "b$block",      # blk name (b0 .. b8)
+                  'Value'     => '',             # cell value
+                  'Button'    => $button,        # ID of board field Button
+                );
+
+    my $self = \%props;
+    bless( $self, $class );
+    return $self;
 }
 
 # general getter for common cell object properties
 #
 sub property {
-    my ($self, $propname, $propval ) = @_;
+    my ( $self, $propname, $propval ) = @_;
 
     exists $self->{$propname}
-        or  die "Code error: attempt to use unknown cell prop. $propname";
+      or die "Code error: attempt to use unknown cell prop. $propname";
 
-    if ($propname eq 'Value') {return $self->cellvalue($propval)};
+    if ( $propname eq 'Value' ) {return $self->cellvalue($propval)}
 
-	defined $propval  and  die "You cannot change property $propname";
-	return $self->{$propname};
+    defined $propval and die "You cannot change property $propname";
+    return $self->{$propname};
 }
 
 # setter/getter for cell object property 'Value'
 #
 sub cellvalue {
-    my ($self, $propval ) = @_;
+    my ( $self, $propval ) = @_;
 
-	if (defined $propval) {
-        my $txtvar = $self->{Button}->cget(-textvariable);
+    if ( defined $propval ) {
+        my $txtvar = $self->{Button}->cget( -textvariable );
         $$txtvar = $propval;
-		$self->{'Value'} = $propval;
-		return;
-	}
-	return $self->{'Value'};
+        $self->{'Value'} = $propval;
+        return;
+    }
+    return $self->{'Value'};
 }
 
 # setter/getter for property 'err'
 #
 sub is_errcell {
-    my ($self, $bool ) = @_;
+    my ( $self, $bool ) = @_;
 
-	if ($bool) {
-		$self->{err} = $bool;
-		return;
-	}
-	return $self->{err};
+    if ($bool) {
+        $self->{err} = $bool;
+        return;
+    }
+    return $self->{err};
 }
 
 #  return all siblings of a given cell
@@ -754,53 +760,47 @@ sub is_errcell {
 #      $presets_ref: Ref to array with preset values
 #
 sub sibling_cells {
-    my ($self, $presets_ref) = @_;
+    my ( $self, $presets_ref ) = @_;
 
-	my @sibls;
-		foreach my $sibltype (qw/Block_num Row_num Col_num/) {
-			my $unitname = $self->property($sibltype);
-			push @sibls, grep {
-					$_->property($sibltype) eq $unitname
-				  } @$presets_ref;
-		}
-	return @sibls;
+    my @sibls;
+    foreach my $sibltype (qw/Block_num Row_num Col_num/) {
+        my $unitname = $self->property($sibltype);
+        push @sibls, grep {$_->property($sibltype) eq $unitname} @$presets_ref;
+    }
+    return @sibls;
 }
 
 # class properties
 # ----------------
 
 my $Unknown_digit = '-';   # default
-my $Act_field = 0;    # default 0 instead of undef to allow numeric compare
+my $Act_field     = 0;     # default 0 instead of undef to allow numeric compare
 
 # setter/getter for class property 'Unknown_digit'
 #
 sub placeholder {
-    shift;   # ignore caller
+    shift;                 # ignore caller
     my $char = shift;
 
-	if ($char) {
-		$Unknown_digit = $char;
-		return;
-	}
-	return $Unknown_digit;
+    if ($char) {
+        $Unknown_digit = $char;
+        return;
+    }
+    return $Unknown_digit;
 }
 
-# setter/getter for property 'act_field'
+# setter/getter for property 'Act_field'
 # the active field is the Button that belongs to the current cell
 #
 sub activefield {
-#    my ($class, $cell ) = @_;
-#say "activefield args: +@_+";
-    shift;   # ignore caller
+    shift;    # ignore caller
     my $cell = shift;
 
-	if ($cell) {
-#		$Class{act_field} = $cell;
-#say "activefield: set to $cell";
-		$Act_field = $cell;
-		return;
-	}
-	return $Act_field;
+    if ($cell) {
+        $Act_field = $cell;
+        return;
+    }
+    return $Act_field;
 }
 
 1;
@@ -891,7 +891,7 @@ This section describes specific behaviour of the public start methods.
 =head2 B<enter>
 
 Method Games::Sudoku::Preset->enter initially displays an empty Sudoku board.
-The user may immediately start entering values, as descibed in section
+The user may immediately start entering values, as described in section
 L</EDIT THE SUDOKU BOARD>.
 
 The returned puzzle has "-" as the placeholder for unknown values.
@@ -901,7 +901,7 @@ The returned puzzle has "-" as the placeholder for unknown values.
 Method Games::Sudoku::Preset->edit displays the initially verified puzzle 
 on the Sudoku board, whether
 with or without errors. The user may immediately start editing it,
-as descibed in section L</EDIT THE SUDOKU BOARD>.
+as described in section L</EDIT THE SUDOKU BOARD>.
 
 =head2 B<validate>
 
@@ -994,7 +994,7 @@ Please report bugs using <http://rt.cpan.org>. Patches are welcome.
 
 =head1 AUTHOR
 
-Klaus Wittrock  (Wittrock#cpan.org)
+Klaus Wittrock  (<Wittrock [at] cpan.org>)
 
 =head1 LICENCE AND COPYRIGHT
 

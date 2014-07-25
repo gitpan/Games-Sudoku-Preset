@@ -13,11 +13,6 @@
       "version" : "2"
    },
    "name" : "Games-Sudoku-Preset",
-   "no_index" : {
-      "package" : [
-         "Games::Sudoku::Preset::Cell"
-      ]
-   },
    "prereqs" : {
       "build" : {
          "requires" : {
@@ -36,19 +31,16 @@
       }
    },
    "provides" : {
-      "Cell" : {
-         "file" : "lib/Games/Sudoku/Preset.pm"
-      },
       "Games::Sudoku::Preset" : {
          "file" : "lib/Games/Sudoku/Preset.pm",
-         "version" : "v0.0.3"
+         "version" : "v0.1.0"
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "license" : [
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "v0.0.3"
+   "version" : "v0.1.0"
 }

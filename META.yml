@@ -13,18 +13,12 @@ meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
 name: Games-Sudoku-Preset
-no_index:
-  package:
-    - Games::Sudoku::Preset::Cell
 provides:
-  Cell:
-    file: lib/Games/Sudoku/Preset.pm
-    version: 0
   Games::Sudoku::Preset:
     file: lib/Games/Sudoku/Preset.pm
-    version: v0.0.3
+    version: v0.1.0
 requires:
   Tk: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: v0.0.3
+version: v0.1.0
